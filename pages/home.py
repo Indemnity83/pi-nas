@@ -1,8 +1,8 @@
 """Home page - shows RAID status overview."""
 
 from hardware.display import draw_header, draw_body_lines_at
-from hardware.display import draw_clean_big, draw_resync_big
-from hardware.display import fmt_temp, fmt_rate
+from hardware.display import draw_clean_big, draw_resync_big, draw_degraded_big
+from hardware.display import fmt_temp, fmt_rate, fmt_time
 from config import L1, L2, L3, BODY_ICON_Y
 
 
@@ -14,19 +14,34 @@ def render(draw, ctx):
     sync_action = raid_status.get("sync_action", "")
     array_state = raid_status.get("array_state", "")
 
-    # Show resync page if actively resyncing/recovering
+    # 1. Show resync page if actively resyncing/recovering
     if sync_action and sync_action not in ("idle", "frozen"):
         if sync_action in ("resync", "recovery", "recover", "check", "repair"):
-            _render_resync(draw, ctx, raid_status)
+            _render_resync(draw, ctx, raid_status, sync_action)
             return
 
-    # Otherwise show clean/normal page
+    # 2. Show degraded page if array is degraded
+    if "degraded" in array_state.lower():
+        _render_degraded(draw, ctx, raid_status)
+        return
+
+    # 3. Otherwise show clean/normal page
     _render_clean(draw, ctx)
 
 
-def _render_resync(draw, ctx, raid_status):
-    """Render resyncing state."""
-    draw_header(draw, ctx, "Resyncing...")
+def _render_resync(draw, ctx, raid_status, sync_action):
+    """Render resyncing/recovery state."""
+    # Dynamic header based on actual sync action
+    header_map = {
+        "resync": "Resync",
+        "recovery": "Recovery",
+        "recover": "Recovery",
+        "check": "Check",
+        "repair": "Repair",
+    }
+    header = header_map.get(sync_action, "Syncing")
+
+    draw_header(draw, ctx, header)
     draw_resync_big(draw, 0, BODY_ICON_Y)
 
     prog_val = "N/A" if raid_status.get('progress') is None else f"{raid_status.get('progress', 0.0):.1f}%"
@@ -35,7 +50,7 @@ def _render_resync(draw, ctx, raid_status):
     finish_min = raid_status.get('finish_min')
     if finish_min is not None:
         eta_s = finish_min * 60
-        eta_val = _fmt_time_short(eta_s)
+        eta_val = fmt_time(eta_s)
     else:
         eta_val = "N/A"
 
@@ -43,6 +58,40 @@ def _render_resync(draw, ctx, raid_status):
         (L1, "Prog:", prog_val),
         (L2, "Rate:", rate_val),
         (L3, "ETA:", eta_val),
+    ])
+
+
+def _render_degraded(draw, ctx, raid_status):
+    """Render degraded state."""
+    draw_header(draw, ctx, "DEGRADED")
+    draw_degraded_big(draw, 0, BODY_ICON_Y)
+
+    # Get array info
+    md_name = ctx.mdadm.get("name")
+    raid_list = ctx.glances.get("raid", ttl_s=5.0) or {}
+    raid_info = raid_list.get(md_name, {})
+
+    # Show disk count (e.g., "3/4 disks")
+    used = raid_info.get("used")
+    avail = raid_info.get("available")
+    if isinstance(used, int) and isinstance(avail, int):
+        array_val = f"{used}/{avail} disks"
+    else:
+        array_val = "Unknown"
+
+    # Get max disk temperature (critical when degraded)
+    smart = ctx.glances.get("smart", ttl_s=10.0) or {}
+    temps = [d.get("temperature_c") for d in smart.values() if d.get("temperature_c") is not None]
+    max_temp = max(temps, default=None) if temps else None
+    temp_val = fmt_temp(max_temp)
+
+    # Show array state
+    array_state = raid_status.get("array_state", "degraded")
+
+    draw_body_lines_at(draw, 34, [
+        (L1, "State:", array_state),
+        (L2, "Array:", array_val),
+        (L3, "Temp:", temp_val),
     ])
 
 
@@ -84,21 +133,3 @@ def _render_clean(draw, ctx):
         (L2, "R/W:", rw_val),
         (L3, "Temp:", temp_val),
     ])
-
-
-def _fmt_time_short(seconds):
-    """Format seconds as compact time string."""
-    if seconds is None:
-        return "N/A"
-
-    s = int(seconds)
-    m, s = divmod(s, 60)
-    h, m = divmod(m, 60)
-    d, h = divmod(h, 24)
-
-    if d > 0:
-        return f"{d}d {h}h"
-    elif h > 0:
-        return f"{h}h {m}m"
-    else:
-        return f"{m}m"
