@@ -1,4 +1,4 @@
-"""Rendering utilities, formatters, and icon definitions."""
+"""Display rendering utilities, formatters, and icon definitions."""
 
 import math
 from PIL import ImageFont

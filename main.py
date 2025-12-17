@@ -12,8 +12,8 @@ from luma.oled.device import ssd1306
 
 from config import I2C_ADDRESS, BUTTON_PIN, BUZZER_PIN, NAV_TIMEOUT, DISPLAY_INTERVAL
 from context import Context
-from render import FONT, advance_spin_frame
-from buzzer import Buzzer
+from hardware.display import FONT, advance_spin_frame
+from hardware.buzzer import Buzzer
 import pages
 import alarms
 
@@ -55,7 +55,7 @@ def gpio_init():
 def draw_loading_screen(device, text="Loading…"):
     """Show loading message on display."""
     from config import SCREEN_W, BODY_CENTER_Y, LINE_HEIGHT
-    from render import FONT, text_width
+    from hardware.display import FONT, text_width
 
     image = Image.new("1", (device.width, device.height))
     draw = ImageDraw.Draw(image)
@@ -76,7 +76,7 @@ def draw_loading_screen(device, text="Loading…"):
 def draw_fatal_error(device, line1, line2=None):
     """Show fatal error on display."""
     from config import L2, L3
-    from render import FONT
+    from hardware.display import FONT
 
     image = Image.new("1", (device.width, device.height))
     draw = ImageDraw.Draw(image)

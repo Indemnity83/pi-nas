@@ -1,6 +1,6 @@
 """Storage page."""
 
-from render import draw_header, draw_body_lines, draw_progress_bar_line, fmt_bytes
+from hardware.display import draw_header, draw_body_lines, draw_progress_bar_line, fmt_bytes
 from config import L1, L2, L3
 
 

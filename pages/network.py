@@ -1,6 +1,6 @@
 """Network page."""
 
-from render import draw_header, draw_body_line, draw_body_text, fmt_rate, fmt_two_cols, fmt_time, BODY_COLS
+from hardware.display import draw_header, draw_body_line, draw_body_text, fmt_rate, fmt_two_cols, fmt_time, BODY_COLS
 from config import L1, L2, L3
 
 

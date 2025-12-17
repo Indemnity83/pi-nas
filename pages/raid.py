@@ -1,6 +1,6 @@
 """RAID page."""
 
-from render import draw_header, draw_body_lines
+from hardware.display import draw_header, draw_body_lines
 from config import L1, L2, L3
 
 

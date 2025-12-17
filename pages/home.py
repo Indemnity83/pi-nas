@@ -1,8 +1,8 @@
 """Home page - shows RAID status overview."""
 
-from render import draw_header, draw_body_lines_at
-from render import draw_clean_big, draw_resync_big
-from render import fmt_temp, fmt_rate
+from hardware.display import draw_header, draw_body_lines_at
+from hardware.display import draw_clean_big, draw_resync_big
+from hardware.display import fmt_temp, fmt_rate
 from config import L1, L2, L3, BODY_ICON_Y
 
 
