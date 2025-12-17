@@ -26,6 +26,17 @@ class Buzzer:
         GPIO.setup(self.pin, GPIO.OUT)
         GPIO.output(self.pin, GPIO.HIGH)  # Start OFF (active-low)
 
+    @classmethod
+    def init(cls):
+        """
+        Initialize buzzer with default pin from config.
+
+        Returns:
+            Buzzer instance
+        """
+        from config import BUZZER_PIN
+        return cls(BUZZER_PIN)
+
     def beep(self, duration_ms: int = 100, duty_cycle: int = 50):
         """
         Simple beep.

@@ -12,6 +12,108 @@ from formatters import (
     fmt_label_value, fmt_pair_width, fmt_two_cols
 )
 
+
+class Display:
+    """OLED display hardware control."""
+
+    # Class-level animation state
+    _frame = 0
+
+    def __init__(self, device):
+        """
+        Initialize Display instance.
+
+        Args:
+            device: Initialized luma device (ssd1306)
+        """
+        self.device = device
+
+    @classmethod
+    def init(cls):
+        """
+        Initialize OLED display device.
+
+        Returns:
+            Display instance with initialized device
+        """
+        from luma.core.interface.serial import i2c
+        from luma.oled.device import ssd1306
+        from config import I2C_ADDRESS
+
+        serial = i2c(port=1, address=I2C_ADDRESS)
+        device = ssd1306(serial, width=128, height=64)
+        return cls(device)
+
+    def draw(self, image):
+        """Draw an image to the display."""
+        self.device.display(image)
+
+    def render(self, page, ctx):
+        """
+        Render a page to the display.
+
+        Args:
+            page: Function that takes (draw, ctx) and renders to draw
+            ctx: Context object to pass to page
+        """
+        image = Image.new("1", (self.device.width, self.device.height))
+        draw = ImageDraw.Draw(image)
+        page(draw, ctx)
+        self.draw(image)
+
+    def clear(self):
+        """Clear the display."""
+        image = Image.new("1", (self.device.width, self.device.height))
+        self.device.display(image)
+
+    def draw_loading_screen(self, text="Loading…"):
+        """Show loading message on display."""
+        image = Image.new("1", (self.device.width, self.device.height))
+        draw = ImageDraw.Draw(image)
+
+        try:
+            w = int(FONT.getlength(text))
+        except Exception:
+            bbox = draw.textbbox((0, 0), text, font=FONT)
+            w = bbox[2] - bbox[0]
+
+        x = (SCREEN_W - w) // 2
+        y = BODY_CENTER_Y - (LINE_HEIGHT // 2)
+
+        draw.text((x, y), text, font=FONT, fill=255)
+        self.device.display(image)
+
+    def draw_fatal_error(self, line1, line2=None):
+        """Show fatal error on display."""
+        image = Image.new("1", (self.device.width, self.device.height))
+        draw = ImageDraw.Draw(image)
+
+        draw.text((0, L2), line1, font=FONT, fill=255)
+        if line2:
+            draw.text((0, L3), line2, font=FONT, fill=255)
+
+        self.device.display(image)
+
+    def show_error(self, error_text):
+        """Show runtime error on display."""
+        image = Image.new("1", (self.device.width, self.device.height))
+        draw = ImageDraw.Draw(image)
+
+        draw.text((0, 0), "OLED ERR", font=FONT, fill=255)
+        draw.text((0, 16), str(error_text)[:20], font=FONT, fill=255)
+
+        self.device.display(image)
+
+    @classmethod
+    def advance_frame(cls):
+        """Advance animation frame."""
+        cls._frame = (cls._frame + 1) % 4
+
+    @classmethod
+    def get_frame(cls):
+        """Get current animation frame."""
+        return cls._frame
+
 # Fonts
 try:
     FONT = ImageFont.truetype(
@@ -46,52 +148,6 @@ def compute_cols_fit(screen_w: int, font, sample_char: str = "0") -> int:
 
 BODY_COLS = compute_cols_fit(SCREEN_W, FONT)
 HEADER_COLS = compute_cols_fit(SCREEN_W, HEADER_FONT)
-
-# Device-level display utilities
-def clear_display(device):
-    """Clear the display."""
-    image = Image.new("1", (device.width, device.height))
-    device.display(image)
-
-def draw_loading_screen(device, text="Loading…"):
-    """Show loading message on display."""
-    image = Image.new("1", (device.width, device.height))
-    draw = ImageDraw.Draw(image)
-
-    try:
-        w = int(FONT.getlength(text))
-    except Exception:
-        bbox = draw.textbbox((0, 0), text, font=FONT)
-        w = bbox[2] - bbox[0]
-
-    x = (SCREEN_W - w) // 2
-    y = BODY_CENTER_Y - (LINE_HEIGHT // 2)
-
-    draw.text((x, y), text, font=FONT, fill=255)
-    device.display(image)
-
-def draw_fatal_error(device, line1, line2=None):
-    """Show fatal error on display."""
-    image = Image.new("1", (device.width, device.height))
-    draw = ImageDraw.Draw(image)
-
-    draw.text((0, L2), line1, font=FONT, fill=255)
-    if line2:
-        draw.text((0, L3), line2, font=FONT, fill=255)
-
-    device.display(image)
-
-# Animation frame counter (used externally)
-_SPIN_FRAME = 0
-
-def get_spin_frame():
-    """Get current animation frame."""
-    return _SPIN_FRAME
-
-def advance_spin_frame():
-    """Advance animation frame."""
-    global _SPIN_FRAME
-    _SPIN_FRAME = (_SPIN_FRAME + 1) % 4
 
 # Icon creation helper
 def make_icon(pattern):
@@ -401,13 +457,13 @@ def draw_clean_big(draw, x, y):
 
 def draw_raid_sync(draw, x, y):
     """Draw animated rebuild icon."""
-    coords = REBUILD_FRAMES[_SPIN_FRAME]
+    coords = REBUILD_FRAMES[Display.get_frame()]
     for dx, dy in coords:
         draw.point((x + dx, y + dy), fill=255)
 
 def draw_resync_big(draw, x, y):
     """Draw large animated rebuild icon."""
-    frame = REBUILD_FRAMES[_SPIN_FRAME]
+    frame = REBUILD_FRAMES[Display.get_frame()]
     for dx, dy in frame:
         px = x + dx * 2
         py = y + dy * 2
@@ -415,13 +471,13 @@ def draw_resync_big(draw, x, y):
 
 def draw_raid_degraded(draw, x, y):
     """Draw animated degraded icon."""
-    idx = (_SPIN_FRAME // 2) % 2
+    idx = (Display.get_frame() // 2) % 2
     for dx, dy in DEGRADED_FRAMES[idx]:
         draw.point((x + dx, y + dy), fill=255)
 
 def draw_raid_unknown(draw, x, y):
     """Draw animated unknown icon."""
-    idx = (_SPIN_FRAME // 2) % 2
+    idx = (Display.get_frame() // 2) % 2
     for dx, dy in UNKNOWN_FRAMES[idx]:
         draw.point((x + dx, y + dy), fill=255)
 
@@ -429,7 +485,7 @@ def draw_power_icon(draw, x, y, throttled: bool):
     """Draw power warning icon if throttled."""
     if not throttled:
         return
-    idx = (_SPIN_FRAME // 2) % 2
+    idx = (Display.get_frame() // 2) % 2
     for dx, dy in POWER_FRAMES[idx]:
         draw.point((x + dx, y + dy), fill=255)
 
