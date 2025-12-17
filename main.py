@@ -12,7 +12,7 @@ from luma.oled.device import ssd1306
 
 from config import I2C_ADDRESS, BUTTON_PIN, BUZZER_PIN, NAV_TIMEOUT, DISPLAY_INTERVAL
 from context import Context
-from hardware.display import FONT, advance_spin_frame
+from hardware.display import FONT, advance_spin_frame, clear_display, draw_loading_screen, draw_fatal_error
 from hardware.buzzer import Buzzer
 import pages
 import alarms
@@ -50,48 +50,6 @@ def gpio_init():
         callback=on_button,
         bouncetime=250
     )
-
-
-def draw_loading_screen(device, text="Loading…"):
-    """Show loading message on display."""
-    from config import SCREEN_W, BODY_CENTER_Y, LINE_HEIGHT
-    from hardware.display import FONT, text_width
-
-    image = Image.new("1", (device.width, device.height))
-    draw = ImageDraw.Draw(image)
-
-    try:
-        w = int(FONT.getlength(text))
-    except Exception:
-        bbox = draw.textbbox((0, 0), text, font=FONT)
-        w = bbox[2] - bbox[0]
-
-    x = (SCREEN_W - w) // 2
-    y = BODY_CENTER_Y - (LINE_HEIGHT // 2)
-
-    draw.text((x, y), text, font=FONT, fill=255)
-    device.display(image)
-
-
-def draw_fatal_error(device, line1, line2=None):
-    """Show fatal error on display."""
-    from config import L2, L3
-    from hardware.display import FONT
-
-    image = Image.new("1", (device.width, device.height))
-    draw = ImageDraw.Draw(image)
-
-    draw.text((0, L2), line1, font=FONT, fill=255)
-    if line2:
-        draw.text((0, L3), line2, font=FONT, fill=255)
-
-    device.display(image)
-
-
-def clear_display(device):
-    """Clear the display."""
-    image = Image.new("1", (device.width, device.height))
-    device.display(image)
 
 
 def handle_shutdown(signum, frame):
