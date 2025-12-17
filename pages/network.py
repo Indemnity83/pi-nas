@@ -1,6 +1,6 @@
 """Network page."""
 
-from render import draw_header, draw_body_line, draw_body_text, fmt_rate, fmt_two_cols, fmt_time
+from render import draw_header, draw_body_line, draw_body_text, fmt_rate, fmt_two_cols, fmt_time, BODY_COLS
 from config import L1, L2, L3
 
 
@@ -21,7 +21,7 @@ def render(draw, ctx):
 
     tx = fmt_rate(tx_kbps)
     rx = fmt_rate(rx_kbps)
-    rate = fmt_two_cols("▲", tx, "▼", rx)
+    rate = fmt_two_cols("▲", tx, "▼", rx, total_cols=BODY_COLS)
 
     uptime_val = fmt_time(ctx.system.get("uptime", ttl_s=10.0))
 
