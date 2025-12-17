@@ -239,6 +239,57 @@ def test_config():
         return True
 
 
+def test_alarms():
+    """Test alarm state management."""
+    print("\nTesting alarm state logic...")
+
+    try:
+        from alarms import AlarmState
+    except ImportError as e:
+        print(f"  ⚠ Skipping (missing dependencies): {e}")
+        return None
+
+    # Test with very short cooldown for testing
+    alarm_state = AlarmState(cooldown_seconds=0.1)
+
+    # Test 1: First alert should trigger
+    if not alarm_state.should_alert("test_alarm"):
+        print("  ✗ First alert should return True")
+        return False
+    print("  ✓ First alert triggers")
+
+    # Test 2: Immediate second alert should not trigger (in cooldown)
+    if alarm_state.should_alert("test_alarm"):
+        print("  ✗ Second alert should be blocked by cooldown")
+        return False
+    print("  ✓ Cooldown prevents immediate re-alert")
+
+    # Test 3: After cooldown, should trigger again
+    time.sleep(0.15)
+    if not alarm_state.should_alert("test_alarm"):
+        print("  ✗ Alert should trigger after cooldown expires")
+        return False
+    print("  ✓ Alert triggers after cooldown expires")
+
+    # Test 4: Different alarms have independent cooldowns
+    alarm_state.should_alert("alarm1")
+    if not alarm_state.should_alert("alarm2"):
+        print("  ✗ Different alarms should have independent cooldowns")
+        return False
+    print("  ✓ Different alarms tracked independently")
+
+    # Test 5: Clear alarm state
+    alarm_state.should_alert("alarm3")
+    alarm_state.clear("alarm3")
+    if not alarm_state.should_alert("alarm3"):
+        print("  ✗ Cleared alarm should trigger immediately")
+        return False
+    print("  ✓ Clear() resets alarm state")
+
+    print("  ✓ All alarm state tests passed")
+    return True
+
+
 def main():
     """Run all smoke tests."""
     print("=" * 60)
@@ -250,6 +301,7 @@ def main():
     results.append(("Imports", test_imports()))
     results.append(("Formatters", test_formatters()))
     results.append(("Caching", test_caching()))
+    results.append(("Alarms", test_alarms()))
     results.append(("Context", test_context()))
     results.append(("Config", test_config()))
 

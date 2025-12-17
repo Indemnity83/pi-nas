@@ -4,6 +4,7 @@
 GLANCES_URL = "http://localhost:61208/api/4"
 I2C_ADDRESS = 0x3C
 BUTTON_PIN = 4
+BUZZER_PIN = 17  # GPIO pin for piezo buzzer (BCM mode)
 
 # Timing / behavior
 NAV_TIMEOUT = 10.0         # seconds before auto-return to "home" page

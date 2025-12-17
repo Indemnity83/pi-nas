@@ -10,10 +10,12 @@ from PIL import Image, ImageDraw
 from luma.core.interface.serial import i2c
 from luma.oled.device import ssd1306
 
-from config import I2C_ADDRESS, BUTTON_PIN, NAV_TIMEOUT, DISPLAY_INTERVAL
+from config import I2C_ADDRESS, BUTTON_PIN, BUZZER_PIN, NAV_TIMEOUT, DISPLAY_INTERVAL
 from context import Context
 from render import FONT, advance_spin_frame
+from buzzer import Buzzer
 import pages
+import alarms
 
 
 # Global state
@@ -21,6 +23,7 @@ current_page = -1     # -1 means "home mode"
 last_nav_at = 0.0     # monotonic timestamp of last navigation
 ctx = None            # Global context
 device = None         # Global device
+buzzer = None         # Global buzzer
 
 
 def on_button(channel):
@@ -93,16 +96,18 @@ def clear_display(device):
 
 def handle_shutdown(signum, frame):
     """Handle shutdown signals."""
-    global device
+    global device, buzzer
     if device:
         clear_display(device)
+    if buzzer:
+        buzzer.cleanup()
     GPIO.cleanup()
     sys.exit(0)
 
 
 def main():
     """Main loop."""
-    global current_page, last_nav_at, ctx, device
+    global current_page, last_nav_at, ctx, device, buzzer
 
     # Initialize hardware
     serial = i2c(port=1, address=I2C_ADDRESS)
@@ -129,9 +134,15 @@ def main():
     # Initialize GPIO
     gpio_init()
 
+    # Initialize buzzer
+    buzzer = Buzzer(BUZZER_PIN)
+
     # Main loop
     while True:
         now_mono = time.monotonic()
+
+        # Check alarms (before display updates)
+        alarms.check(ctx, buzzer)
 
         # Auto-return to home if user hasn't navigated recently
         if current_page != -1 and (now_mono - last_nav_at) >= NAV_TIMEOUT:
@@ -173,6 +184,11 @@ if __name__ == "__main__":
         try:
             if device:
                 clear_display(device)
+        except Exception:
+            pass
+        try:
+            if buzzer:
+                buzzer.cleanup()
         except Exception:
             pass
         GPIO.cleanup()
