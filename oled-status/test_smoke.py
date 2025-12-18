@@ -39,7 +39,6 @@ def test_imports():
     try:
         import config
         import context
-        import render
         from sources import base, glances, mdadm, system
         from pages import home, network
         from pages import system as page_system

@@ -24,8 +24,18 @@ class Button:
         """
         instance = cls()
 
+        # Suppress GPIO warnings about channels already in use
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+        # Remove any existing event detection before adding new one
+        # (handles case where previous instance didn't cleanup properly)
+        try:
+            GPIO.remove_event_detect(BUTTON_PIN)
+        except RuntimeError:
+            pass  # No event detection to remove, that's fine
+
         GPIO.add_event_detect(
             BUTTON_PIN,
             GPIO.FALLING,
