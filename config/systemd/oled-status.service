@@ -1,0 +1,14 @@
+[Unit]
+Description=OLED Status Display
+After=network.target glances.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/pi/pi-nas/oled-status
+ExecStart=/home/pi/pi-nas/venv/bin/python3 /home/pi/pi-nas/oled-status/main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

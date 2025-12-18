@@ -1,0 +1,11 @@
+# NAS Python Dependencies
+# Shared virtual environment for all Python services
+
+# System Monitoring
+glances[web]>=3.4.0
+
+# OLED Status Display
+pillow>=10.0.0
+requests>=2.31.0
+luma.oled>=3.12.0
+RPi.GPIO>=0.7.1

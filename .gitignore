@@ -1,32 +1,46 @@
+# Virtual environment
+venv/
+env/
+ENV/
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
+
+# Distribution / packaging
 *.egg-info/
 dist/
 build/
 
-# Backups
-*.bak
-*~
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Claude Code
-CLAUDE.md
+# OS
+.DS_Store
+Thumbs.db
 
-# Environment
-.env
-venv/
-env/
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Local config overrides
+config.local.py
+*.local.*
