@@ -71,13 +71,16 @@ def _render_degraded(draw, ctx, raid_status):
     raid_list = ctx.glances.get("raid", ttl_s=5.0) or {}
     raid_info = raid_list.get(md_name, {})
 
-    # Show disk count (e.g., "3/4 disks")
+    # Show disk count (shortened: "1/2")
     used = raid_info.get("used")
     avail = raid_info.get("available")
-    if isinstance(used, int) and isinstance(avail, int):
-        array_val = f"{used}/{avail} disks"
-    else:
-        array_val = "Unknown"
+    try:
+        # Convert to int (Glances returns strings)
+        used_int = int(used) if used else 0
+        avail_int = int(avail) if avail else 0
+        array_val = f"{used_int}/{avail_int}"
+    except (ValueError, TypeError):
+        array_val = "N/A"
 
     # Get max disk temperature (critical when degraded)
     smart = ctx.glances.get("smart", ttl_s=10.0) or {}
@@ -85,12 +88,12 @@ def _render_degraded(draw, ctx, raid_status):
     max_temp = max(temps, default=None) if temps else None
     temp_val = fmt_temp(max_temp)
 
-    # Show array state
-    array_state = raid_status.get("array_state", "degraded")
+    # Get RAID type
+    raid_type = raid_info.get("type", "N/A")
 
     draw_body_lines_at(draw, 34, [
-        (L1, "State:", array_state),
-        (L2, "Array:", array_val),
+        (L1, "Disks:", array_val),
+        (L2, "Type:", raid_type.upper()),
         (L3, "Temp:", temp_val),
     ])
 
