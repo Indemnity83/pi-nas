@@ -21,10 +21,13 @@ class Buzzer:
         """
         self.pin = pin
         self.frequency = frequency
-        self.pwm = None
 
         GPIO.setup(self.pin, GPIO.OUT)
         GPIO.output(self.pin, GPIO.HIGH)  # Start OFF (active-low)
+
+        # Create PWM object once and reuse it
+        self.pwm = GPIO.PWM(self.pin, self.frequency)
+        self.pwm.start(0)  # Start PWM but silent (0% duty cycle)
 
     @classmethod
     def init(cls):
@@ -45,10 +48,9 @@ class Buzzer:
             duration_ms: Beep duration in milliseconds
             duty_cycle: PWM duty cycle (0-100)
         """
-        self.pwm = GPIO.PWM(self.pin, self.frequency)
-        self.pwm.start(duty_cycle)
+        self.pwm.ChangeDutyCycle(duty_cycle)
         time.sleep(duration_ms / 1000.0)
-        self.pwm.stop()
+        self.pwm.ChangeDutyCycle(0)  # Silent (but keep PWM running)
 
     def pattern(self, pattern: str):
         """
@@ -79,4 +81,5 @@ class Buzzer:
         """Cleanup GPIO."""
         if self.pwm:
             self.pwm.stop()
+            self.pwm = None
         GPIO.output(self.pin, GPIO.HIGH)  # OFF
