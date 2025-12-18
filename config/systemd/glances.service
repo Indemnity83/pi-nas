@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=root
-ExecStart=/home/pi/pi-nas/venv/bin/glances -w --disable-plugin ports
+ExecStart=/home/pi/pi-nas/venv/bin/glances -w -C /home/pi/pi-nas/config/glances.conf
 Restart=always
 RestartSec=10
 

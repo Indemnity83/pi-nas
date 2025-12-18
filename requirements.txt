@@ -2,7 +2,7 @@
 # Shared virtual environment for all Python services
 
 # System Monitoring
-glances[web]>=3.4.0
+glances[web,smart,raid]>=3.4.0
 
 # OLED Status Display
 pillow>=10.0.0
