@@ -8,6 +8,7 @@ BUZZER_PIN = 17  # GPIO pin for piezo buzzer (BCM mode)
 
 # Timing / behavior
 NAV_TIMEOUT = 10.0         # seconds before auto-return to "home" page
+SCREENSAVER_TIMEOUT = 600.0  # seconds before screensaver activates (10 minutes)
 DATA_INTERVAL = 2.0        # seconds between data polls
 DISPLAY_INTERVAL = 0.2     # seconds between OLED refreshes
 

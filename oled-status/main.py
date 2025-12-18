@@ -79,6 +79,9 @@ def main():
     # Initialize buzzer
     buzzer = Buzzer.init()
 
+    # Initialize last navigation time to now (prevent immediate screensaver)
+    last_nav_at = time.monotonic()
+
     # Main loop
     while True:
         now_mono = time.monotonic()
@@ -97,10 +100,13 @@ def main():
         page = current_page
         nav_at = last_nav_at
 
+        # Add navigation timing to context for pages that need it
+        ctx.last_nav_at = nav_at
+
         # Render page
         try:
             if page == -1 or (now_mono - nav_at) >= NAV_TIMEOUT:
-                # Home page
+                # Home page (handles screensaver internally)
                 display.render(pages.home, ctx)
             else:
                 # Browse page

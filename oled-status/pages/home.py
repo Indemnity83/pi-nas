@@ -1,9 +1,14 @@
 """Home page - shows RAID status overview."""
 
+import time
 from hardware.display import draw_header, draw_body_lines_at
 from hardware.display import draw_clean_big, draw_resync_big, draw_degraded_big
 from hardware.display import fmt_temp, fmt_rate, fmt_time
-from config import L1, L2, L3, BODY_ICON_Y
+from config import L1, L2, L3, BODY_ICON_Y, SCREENSAVER_TIMEOUT
+from screensaver import BouncingRaidIcon
+
+# Module-level screensaver instance
+_screensaver = BouncingRaidIcon()
 
 
 def render(draw, ctx):
@@ -99,7 +104,17 @@ def _render_degraded(draw, ctx, raid_status):
 
 
 def _render_clean(draw, ctx):
-    """Render clean/online state."""
+    """Render clean/online state (or screensaver if idle)."""
+    # Check if screensaver should activate
+    now = time.monotonic()
+    last_nav_at = getattr(ctx, 'last_nav_at', now)  # Default to now if not set
+    if (now - last_nav_at) >= SCREENSAVER_TIMEOUT:
+        # Render screensaver instead of normal clean display
+        _screensaver.update()
+        _screensaver.render(draw, ctx)
+        return
+
+    # Normal clean display
     draw_header(draw, ctx, "Online")
     draw_clean_big(draw, 0, BODY_ICON_Y)
 
