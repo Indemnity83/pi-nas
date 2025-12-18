@@ -8,4 +8,4 @@ glances[web,smart,raid]>=3.4.0
 pillow>=10.0.0
 requests>=2.31.0
 luma.oled>=3.12.0
-RPi.GPIO>=0.7.1
+# RPi.GPIO>=0.7.1  # Use system package (via --system-site-packages) for proper kernel compatibility
