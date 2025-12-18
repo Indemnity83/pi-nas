@@ -20,7 +20,9 @@ def render(draw, ctx):
     used = r.get("used")
     avail = r.get("available")
 
-    state_val = f"{status} ({rtype})" if rtype != "n/a" else status
+    # Use RAID type as label, status as value
+    state_label = f"{rtype.upper()}:" if rtype != "n/a" else "State:"
+    state_val = status.capitalize()
 
     if isinstance(used, int) and isinstance(avail, int):
         health_val = f"{used}/{avail} {config}"
@@ -35,7 +37,7 @@ def render(draw, ctx):
     members_val = " ".join(members) if members else "N/A"
 
     draw_body_lines(draw, [
-        (L1, "State:", state_val),
+        (L1, state_label, state_val),
         (L2, "Health:", health_val),
         (L3, "Disks:", members_val),
     ])
