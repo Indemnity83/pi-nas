@@ -5,7 +5,7 @@ import time
 import signal
 import sys
 
-from config import NAV_TIMEOUT, DISPLAY_INTERVAL
+from config import NAV_TIMEOUT, DISPLAY_INTERVAL, SCREENSAVER_TIMEOUT
 from context import Context
 from hardware.display import Display
 from hardware.button import Button
@@ -28,6 +28,12 @@ def on_button(channel):
     global current_page, last_nav_at
 
     now = time.monotonic()
+
+    # If in home mode and screensaver is active, just wake up (don't navigate)
+    if current_page == -1 and (now - last_nav_at) >= SCREENSAVER_TIMEOUT:
+        last_nav_at = now
+        return
+
     last_nav_at = now
 
     # If in home mode, start at first browse page
